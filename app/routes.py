@@ -47,10 +47,11 @@ class Almacen(Resource):
                     return {'Objeto': objeto, 'status':200}
             # Si no encuentra coincidencia, le da un mensaje de no encontrada
             return {'Mensaje': 'Objeto no encontrado', 'status': 404}
+        
         elif parametro_nombre != None:
             # Recorremos la lista de objetos en el almacen
             for objeto in lista_objetos_almacen:
-                # Si la llave 'id' de un objeto coincide con lo que nos pide el usuario
+                # Si la llave 'nombre' de un objeto coincide con lo que nos pide el usuario
                 if objeto.get('nombre') == parametro_nombre:
                     #Regresamos el objeto que pidio
                     return {'Objeto': objeto, 'status':200}
