@@ -2,28 +2,19 @@
 from urllib.parse import parse_qs
 from flask_restful import Resource
 
+# Importamos los metodos de nuestra API
+from .methods import *
+
 # El modulo request nos permite aceptar info de un usuario
 from flask import request
 
-lista_objetos_almacen = [
-    {'id':1,
-     'nombre': 'Lapiz',
-     'cantidad': 4
-    },
-    {'id':2,
-     'nombre': 'Goma',
-     'Cantidad': 3
-
-    },
-    {'id':1,
-     'nombre': 'Tijera',
-     'cantidad': 6
-    }]
+from flask_jwt_extended import jwt_required
 
 # Creamos una clase que va a heredar atributos del modulo "Resource"
 class HelloWorld(Resource):
 
     # Este método se va a ejecutar cuando el usuario acceda a cierta ruta
+    @jwt_required()
     def get(self):
         # Regresamos un diccionario con el mensaje que queremos mostrar
         return { 'message': 'Hola mundo desde la API', 'status':200}
@@ -37,29 +28,7 @@ class Almacen(Resource):
         parametro_id = request.args.get('id')
         parametro_nombre = request.args.get('nombre')
 
-        # Comparamos si el parametro esta vacio
-        if parametro_id != None:
-            # Recorremos la lista de objetos en el almacen
-            for objeto in lista_objetos_almacen:
-                # Si la llave 'id' de un objeto coincide con lo que nos pide el usuario
-                if objeto.get('id') == int(parametro_id):
-                    #Regresamos el objeto que pidio
-                    return {'Objeto': objeto, 'status':200}
-            # Si no encuentra coincidencia, le da un mensaje de no encontrada
-            return {'Mensaje': 'Objeto no encontrado', 'status': 404}
-        
-        elif parametro_nombre != None:
-            # Recorremos la lista de objetos en el almacen
-            for objeto in lista_objetos_almacen:
-                # Si la llave 'nombre' de un objeto coincide con lo que nos pide el usuario
-                if objeto.get('nombre') == parametro_nombre:
-                    #Regresamos el objeto que pidio
-                    return {'Objeto': objeto, 'status':200}
-            # Si no encuentra coincidencia, le da un mensaje de no encontrada
-            return {'Mensaje': 'Objeto no encontrado', 'status': 404}
-        
-        # Si el parametro no se mando, regresamos todos los objetos de mi lista
-        return {'Objetos': lista_objetos_almacen, 'status':200}
+        return buscar_elemento_id_nombre(parametro_id, parametro_nombre)
 
     # Ponemos un nuevo objeto en el almacen
     # Enviarle informacion API mediante el cliente
@@ -68,10 +37,29 @@ class Almacen(Resource):
         # Se crea una nueva variable para guardar la informacion que posteo el usuario
         data = request.get_json()
 
-        # Agregamos la informacion a la lista del almacen
-        lista_objetos_almacen.append(data)
+        return crear_producto(data['nombre'],data['cantidad'])
 
-        return { 'received': True, 'status':200, 'info': data}
+class User_register(Resource):
+    def post(self):
+        data_recieve = request.form
+        username = data_recieve.get('username')
+        email = data_recieve.get('email')
+        password = data_recieve.get('password')
+
+        #print(email,username,password)
+
+        respuesta,status = user_register(username, email, password)
+        return respuesta, status
+
+class User_login(Resource):
+    def post(self):
+        data_recieve = request.form
+        email = data_recieve.get('email')
+        password = data_recieve.get('password')
+
+        repuesta, status = inicio_sesion(email, password)
+
+        return repuesta,status
 
 # Creamos una clase que va a manejar todas las rutas
 class APIRoutes:
@@ -79,5 +67,9 @@ class APIRoutes:
     #Se declara un método para inicializar las rutas
     def init_routes(self, api):
         api.add_resource(HelloWorld, '/')
+
+        api.add_resource(User_login,'/usuarios/login')
+
+        api.add_resource(User_register,'/usuarios/registro')
 
         api.add_resource(Almacen, '/objetos_almacen')
